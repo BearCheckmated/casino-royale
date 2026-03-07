@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plinko - Betting Game</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a2e;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background-color: #16213e;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: flex;
+            gap: 20px;
+            max-width: 900px;
+        }
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 250px;
+            background-color: #0f3460;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .header {
+            border-bottom: 1px solid #1a1a2e;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+        .credits {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #f1c40f;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        input, select {
+            background-color: #1a1a2e;
+            color: white;
+            border: 1px solid #e94560;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        button {
+            background-color: #e94560;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 10px;
+        }
+        button:hover { background-color: #ff5270; }
+        button:disabled { background-color: #555; cursor: not-allowed; }
+        canvas {
+            background-color: #0d1b2a;
+            border-radius: 8px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+        }
+        #message {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #2ecc71;
+            min-height: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="sidebar">
+        <div class="header">
+            <h2>PLINKO</h2>
+            <div class="credits">$$ <span id="credit-display">1000.00</span></div>
+        </div>
+
+        <div class="input-group">
+            <label>Bet Amount:</label>
+            <input type="number" id="bet-input" value="10" min="1" step="1">
+        </div>
+        
+        <div class="input-group">
+            <label>Risk (16 Rows):</label>
+            <select id="risk-select" disabled>
+                <option value="high">High Risk</option>
+            </select>
+            <small style="color:#aaa;">*Hardcoded to High/16 for demo</small>
+        </div>
+
+        <button id="drop-btn" onclick="dropBall()">Drop Ball</button>
+        <div id="message"></div>
+    </div>
+
+    <div>
+        <canvas id="plinkoCanvas" width="600" height="500"></canvas>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('plinkoCanvas');
+    const ctx = canvas.getContext('2d');
+    const creditDisplay = document.getElementById('credit-display');
+    const betInput = document.getElementById('bet-input');
+    const messageEl = document.getElementById('message');
+
+    let credits = 1000.0;
+    const ROWS = 16;
+    const PEG_RADIUS = 4;
+    const BALL_RADIUS = 6;
+    
+    // High Risk 16-row multipliers typical of Stake
+    const MULTIPLIERS = [1000, 130, 26, 9, 4, 2, 0.2, 0.2, 0.2, 0.2, 0.2, 2, 4, 9, 26, 130, 1000];
+    const COLORS = ['#ff0000', '#ff4000', '#ff8000', '#ffbf00', '#ffff00', '#bfff00', '#80ff00', '#40ff00', '#00ff00', '#40ff00', '#80ff00', '#bfff00', '#ffff00', '#ffbf00', '#ff8000', '#ff4000', '#ff0000'];
+
+    const X_START = canvas.width / 2;
+    const Y_START = 40;
+    const ROW_SPACING = 25;
+    const COL_SPACING = 30;
+
+    let balls = [];
+
+    function updateCredits() {
+        creditDisplay.innerText = credits.toFixed(2);
+    }
+
+    function drawBoard() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw Pegs
+        ctx.fillStyle = '#fff';
+        for (let row = 0; row < ROWS; row++) {
+            const pegsInRow = row + 1;
+            const rowWidth = (pegsInRow - 1) * COL_SPACING;
+            const startX = X_START - (rowWidth / 2);
+
+            for (let col = 0; col < pegsInRow; col++) {
+                ctx.beginPath();
+                ctx.arc(startX + col * COL_SPACING, Y_START + row * ROW_SPACING, PEG_RADIUS, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // Draw Multiplier Slots at the bottom
+        const bottomRowY = Y_START + ROWS * ROW_SPACING + 10;
+        const slotsCount = ROWS + 1;
+        const totalWidth = (slotsCount - 1) * COL_SPACING;
+        const slotStartX = X_START - (totalWidth / 2);
+
+        for (let i = 0; i < slotsCount; i++) {
+            ctx.fillStyle = COLORS[i];
+            ctx.fillRect(slotStartX + i * COL_SPACING - 12, bottomRowY, 24, 20);
+            
+            ctx.fillStyle = '#000';
+            ctx.font = '10px Arial';
+            ctx.textAlign = 'center';
+            let text = MULTIPLIERS[i] >= 1000 ? '1k' : MULTIPLIERS[i];
+            ctx.fillText(text, slotStartX + i * COL_SPACING, bottomRowY + 14);
+        }
+    }
+
+    function dropBall() {
+        const betAmount = parseFloat(betInput.value);
+        if (isNaN(betAmount) || betAmount <= 0 || betAmount > credits) {
+            messageEl.innerText = "Invalid bet or insufficient funds!";
+            return;
+        }
+
+        credits -= betAmount;
+        updateCredits();
+        messageEl.innerText = `Dropped ball for $${betAmount}`;
+
+        // Pre-calculate the path (Provably Fair RNG concept)
+        let path = [];
+        let rights = 0;
+        for (let i = 0; i < ROWS; i++) {
+            const goesRight = Math.random() < 0.5;
+            path.push(goesRight ? 1 : -1);
+            if (goesRight) rights++;
+        }
+
+        balls.push({
+            x: X_START,
+            y: Y_START,
+            row: 0,
+            path: path,
+            slotIndex: rights,
+            bet: betAmount,
+            progress: 0 // animation progress to next peg (0 to 1)
+        });
+    }
+
+    function animate() {
+        drawBoard();
+
+        for (let i = balls.length - 1; i >= 0; i--) {
+            let b = balls[i];
+            
+            // Calculate current visual position
+            const pegsInRow = b.row + 1;
+            const rowWidth = (pegsInRow - 1) * COL_SPACING;
+            
+            // Where the ball is currently
+            let currentRights = b.path.slice(0, b.row).filter(dir => dir === 1).length;
+            let currentLefts = b.row - currentRights;
+            
+            let startX = X_START + ((currentRights * COL_SPACING / 2) - (currentLefts * COL_SPACING / 2));
+            let startY = Y_START + b.row * ROW_SPACING;
+
+            // Where the ball is going
+            let targetX = startX + (b.path[b.row] * COL_SPACING / 2);
+            let targetY = startY + ROW_SPACING;
+
+            // Interpolate position based on progress
+            b.x = startX + (targetX - startX) * b.progress;
+            
+            // Add a slight arc/bounce to the y movement
+            let bounceY = Math.sin(b.progress * Math.PI) * 5; 
+            b.y = startY + (targetY - startY) * b.progress - bounceY;
+
+            // Draw Ball
+            ctx.fillStyle = '#e94560';
+            ctx.beginPath();
+            ctx.arc(b.x, b.y, BALL_RADIUS, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Advance animation
+            b.progress += 0.08; // Speed of the ball
+
+            if (b.progress >= 1) {
+                b.row++;
+                b.progress = 0;
+
+                // Check if reached bottom
+                if (b.row >= ROWS) {
+                    const winAmount = b.bet * MULTIPLIERS[b.slotIndex];
+                    credits += winAmount;
+                    updateCredits();
+                    messageEl.innerText = `Hit ${MULTIPLIERS[b.slotIndex]}x! Won $${winAmount.toFixed(2)}`;
+                    balls.splice(i, 1); // Remove ball
+                }
+            }
+        }
+
+        requestAnimationFrame(animate);
+    }
+
+    // Initialize
+    drawBoard();
+    animate();
+</script>
+
+</body>
+</html>
