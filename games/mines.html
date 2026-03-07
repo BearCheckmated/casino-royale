@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mines - Betting Game</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a2e;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background-color: #16213e;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-width: 400px;
+            width: 100%;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #0f3460;
+        }
+        .credits {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #f1c40f;
+        }
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .input-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        input {
+            background-color: #0f3460;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            width: 100px;
+            font-size: 1rem;
+            text-align: right;
+        }
+        button {
+            background-color: #e94560;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: 100%;
+        }
+        button:hover { background-color: #ff5270; }
+        button:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        .cashout-btn {
+            background-color: #2ecc71;
+            display: none;
+            margin-top: 10px;
+        }
+        .cashout-btn:hover { background-color: #27ae60; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .tile {
+            background-color: #0f3460;
+            aspect-ratio: 1;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: transform 0.1s, background-color 0.2s;
+        }
+        .tile:hover { filter: brightness(1.2); }
+        .tile.revealed-safe {
+            background-color: #2ecc71;
+            cursor: default;
+        }
+        .tile.revealed-mine {
+            background-color: #e74c3c;
+            cursor: default;
+        }
+        .tile.dimmed-mine {
+            background-color: #c0392b;
+            opacity: 0.6;
+            cursor: default;
+        }
+        .message {
+            text-align: center;
+            font-size: 1.1rem;
+            min-height: 24px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h2>MINES</h2>
+        <div class="credits">Credits: <span id="credit-display">1000.00</span></div>
+    </div>
+
+    <div class="controls">
+        <div class="input-group">
+            <label>Bet Amount:</label>
+            <input type="number" id="bet-input" value="10" min="1" step="1">
+        </div>
+        <div class="input-group">
+            <label>Mines (1-24):</label>
+            <input type="number" id="mine-input" value="3" min="1" max="24" step="1">
+        </div>
+        <button id="start-btn" onclick="startGame()">Place Bet</button>
+        <button id="cashout-btn" class="cashout-btn" onclick="cashOut()">Cash Out</button>
+    </div>
+
+    <div class="grid" id="grid">
+        </div>
+
+    <div class="message" id="message">Place a bet to start!</div>
+</div>
+
+<script>
+    let credits = 1000.0;
+    let isPlaying = false;
+    let betAmount = 0;
+    let mineCount = 0;
+    let safeClicks = 0;
+    let gridData = []; // true = mine, false = safe
+    const totalTiles = 25;
+
+    const creditDisplay = document.getElementById('credit-display');
+    const startBtn = document.getElementById('start-btn');
+    const cashoutBtn = document.getElementById('cashout-btn');
+    const messageEl = document.getElementById('message');
+    const gridEl = document.getElementById('grid');
+    const betInput = document.getElementById('bet-input');
+    const mineInput = document.getElementById('mine-input');
+
+    // Initialize blank grid
+    function createGrid() {
+        gridEl.innerHTML = '';
+        for (let i = 0; i < totalTiles; i++) {
+            const tile = document.createElement('div');
+            tile.className = 'tile';
+            tile.onclick = () => handleTileClick(i, tile);
+            gridEl.appendChild(tile);
+        }
+    }
+
+    function updateCredits() {
+        creditDisplay.innerText = credits.toFixed(2);
+    }
+
+    // Calculates multiplier based on probability + 1% house edge
+    function getMultiplier(mines, clicks) {
+        if (clicks === 0) return 1.00;
+        let prob = 1.0;
+        let remainingTiles = 25;
+        let remainingSafe = 25 - mines;
+        
+        for (let i = 0; i < clicks; i++) {
+            prob *= (remainingSafe / remainingTiles);
+            remainingTiles--;
+            remainingSafe--;
+        }
+        
+        const houseEdgeRTP = 0.99; 
+        return (houseEdgeRTP / prob);
+    }
+
+    function startGame() {
+        betAmount = parseFloat(betInput.value);
+        mineCount = parseInt(mineInput.value);
+
+        if (isNaN(betAmount) || betAmount <= 0 || betAmount > credits) {
+            messageEl.innerText = "Invalid bet amount!";
+            return;
+        }
+        if (isNaN(mineCount) || mineCount < 1 || mineCount > 24) {
+            messageEl.innerText = "Mines must be between 1 and 24!";
+            return;
+        }
+
+        // Deduct bet
+        credits -= betAmount;
+        updateCredits();
+
+        // Setup Game State
+        isPlaying = true;
+        safeClicks = 0;
+        startBtn.style.display = 'none';
+        cashoutBtn.style.display = 'block';
+        cashoutBtn.disabled = true; // Can't cash out on 0 clicks
+        cashoutBtn.innerText = `Cash Out ($${betAmount.toFixed(2)})`;
+        messageEl.innerText = "Good luck!";
+        
+        // Generate Mines
+        gridData = Array(totalTiles).fill(false);
+        for (let i = 0; i < mineCount; i++) {
+            gridData[i] = true;
+        }
+        
+        // Fisher-Yates Shuffle
+        for (let i = gridData.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [gridData[i], gridData[j]] = [gridData[j], gridData[i]];
+        }
+
+        createGrid();
+        
+        // Disable inputs during play
+        betInput.disabled = true;
+        mineInput.disabled = true;
+    }
+
+    function handleTileClick(index, tileElement) {
+        if (!isPlaying || tileElement.classList.contains('revealed-safe')) return;
+
+        if (gridData[index]) {
+            // Hit a mine
+            loseGame(index);
+        } else {
+            // Safe tile
+            safeClicks++;
+            tileElement.classList.add('revealed-safe');
+            tileElement.innerText = '💎';
+            
+            const currentMulti = getMultiplier(mineCount, safeClicks);
+            const currentWin = betAmount * currentMulti;
+            
+            cashoutBtn.disabled = false;
+            cashoutBtn.innerText = `Cash Out ($${currentWin.toFixed(2)}) [${currentMulti.toFixed(2)}x]`;
+
+            // Check if player cleared all safe tiles (auto-win)
+            if (safeClicks === (totalTiles - mineCount)) {
+                cashOut();
+            }
+        }
+    }
+
+    function loseGame(fatalIndex) {
+        isPlaying = false;
+        messageEl.innerText = "Boom! You hit a mine and lost your bet.";
+        revealAll(fatalIndex);
+        resetControls();
+    }
+
+    function cashOut() {
+        if (!isPlaying || safeClicks === 0) return;
+        
+        const multi = getMultiplier(mineCount, safeClicks);
+        const winAmount = betAmount * multi;
+        
+        credits += winAmount;
+        updateCredits();
+        
+        isPlaying = false;
+        messageEl.innerText = `You cashed out and won $${winAmount.toFixed(2)}!`;
+        revealAll(-1);
+        resetControls();
+    }
+
+    function revealAll(fatalIndex) {
+        const tiles = gridEl.children;
+        for (let i = 0; i < totalTiles; i++) {
+            if (gridData[i]) {
+                if (i === fatalIndex) {
+                    tiles[i].classList.add('revealed-mine');
+                    tiles[i].innerText = '💣';
+                } else {
+                    tiles[i].classList.add('dimmed-mine');
+                    tiles[i].innerText = '💣';
+                }
+            } else if (!tiles[i].classList.contains('revealed-safe')) {
+                 tiles[i].style.opacity = '0.4';
+            }
+        }
+    }
+
+    function resetControls() {
+        startBtn.style.display = 'block';
+        cashoutBtn.style.display = 'none';
+        betInput.disabled = false;
+        mineInput.disabled = false;
+    }
+
+    // Init
+    createGrid();
+    updateCredits();
+</script>
+
+</body>
+</html>
