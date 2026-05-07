@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Casino Royale</title>
+
+  <!-- =========================================================
+       FONTS
+       Using Playfair Display for headings (classic, opulent)
+       and Cormorant Garamond for body (editorial, refined).
+       Swap these out if you prefer a different style.
+  ========================================================= -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Cormorant+Garamond:wght@300;400;600&display=swap" rel="stylesheet"/>
+
+  <style>
+    /* =========================================================
+       CSS VARIABLES — edit these to retheme the whole page
+    ========================================================= */
+    :root {
+      --bg-deep:    #0a0a0f;
+      --bg-felt:    #0d1a12;       /* dark casino-felt green */
+      --gold:       #c9a84c;
+      --gold-light: #f0d080;
+      --gold-dim:   #6e5a28;
+      --cream:      #f5ead8;
+      --red-chip:   #b5312a;
+      --card-bg:    #12201a;
+      --border:     rgba(201,168,76,0.35);
+      --glow:       rgba(201,168,76,0.18);
+    }
+
+    /* =========================================================
+       RESET & BASE
+    ========================================================= */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-deep);
+      color: var(--cream);
+      font-family: 'Cormorant Garamond', serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* =========================================================
+       BACKGROUND — felt texture with radial gradient spotlight
+    ========================================================= */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(13,26,18,0.95) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 40% at 50% 100%, rgba(10,10,15,0.9) 0%, transparent 70%),
+        repeating-linear-gradient(
+          45deg,
+          transparent,
+          transparent 2px,
+          rgba(255,255,255,0.012) 2px,
+          rgba(255,255,255,0.012) 4px
+        ),
+        var(--bg-felt);
+      z-index: -1;
+    }
+
+    /* =========================================================
+       DECORATIVE CORNER SUIT WATERMARKS
+    ========================================================= */
+    body::after {
+      content: '♠ ♥ ♦ ♣';
+      position: fixed;
+      bottom: 2rem;
+      right: 2.5rem;
+      font-size: 1.1rem;
+      letter-spacing: 0.6rem;
+      color: rgba(201,168,76,0.12);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* =========================================================
+       HEADER / HERO SECTION
+    ========================================================= */
+    header {
+      text-align: center;
+      padding: 5rem 2rem 3.5rem;
+      position: relative;
+    }
+
+    /* Thin gold rule above the title */
+    header::before {
+      content: '';
+      display: block;
+      width: 120px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 0 auto 2rem;
+    }
+
+    .crown {
+      font-size: 2.2rem;
+      line-height: 1;
+      margin-bottom: 0.75rem;
+      filter: drop-shadow(0 0 12px var(--gold));
+      animation: floatCrown 4s ease-in-out infinite;
+    }
+
+    @keyframes floatCrown {
+      0%, 100% { transform: translateY(0);   }
+      50%       { transform: translateY(-6px); }
+    }
+
+    h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(3rem, 8vw, 6.5rem);
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      line-height: 1;
+      background: linear-gradient(160deg, var(--gold-light) 0%, var(--gold) 45%, var(--gold-dim) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: none; /* shadow applied via filter on wrapper */
+      filter: drop-shadow(0 2px 18px rgba(201,168,76,0.35));
+    }
+
+    .subtitle {
+      margin-top: 1rem;
+      font-size: 1.05rem;
+      font-weight: 300;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: rgba(245,234,216,0.55);
+    }
+
+    /* Thin gold rule below the title */
+    header::after {
+      content: '— ♦ —';
+      display: block;
+      margin-top: 2.2rem;
+      font-size: 1rem;
+      letter-spacing: 0.5em;
+      color: var(--gold-dim);
+    }
+
+    /* =========================================================
+       MAIN GAME GRID
+       Add more .game-card entries inside #games-grid to add
+       more games (see comment block below the grid).
+    ========================================================= */
+    #games-grid {
+      display: grid;
+      /* Auto-fit: each card is at least 280px wide, up to 1fr */
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+      max-width: 1100px;
+      margin: 0 auto 6rem;
+      padding: 0 2rem;
+    }
+
+    /* =========================================================
+       GAME CARD
+       Each card links to one game file.
+    ========================================================= -->
+    */
+    .game-card {
+      position: relative;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2.8rem 2rem 2.2rem;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 0.9rem;
+      overflow: hidden;
+      transition: transform 0.35s cubic-bezier(0.22,1,0.36,1),
+                  box-shadow 0.35s ease,
+                  border-color 0.35s ease;
+
+      /* staggered fade-in on load */
+      opacity: 0;
+      animation: cardReveal 0.7s ease forwards;
+    }
+
+    /* Stagger delay for each card — add more nth-child rules as you add games */
+    .game-card:nth-child(1) { animation-delay: 0.15s; }
+    .game-card:nth-child(2) { animation-delay: 0.30s; }
+    .game-card:nth-child(3) { animation-delay: 0.45s; }
+    /* .game-card:nth-child(4) { animation-delay: 0.60s; } */
+    /* .game-card:nth-child(5) { animation-delay: 0.75s; } */
+
+    @keyframes cardReveal {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0);    }
+    }
+
+    /* Subtle corner-glow effect */
+    .game-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 70% 50% at 50% 0%, var(--glow), transparent 70%);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    /* Gold top-border sweep on hover */
+    .game-card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold-light), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .game-card:hover {
+      transform: translateY(-8px) scale(1.015);
+      box-shadow: 0 24px 60px rgba(0,0,0,0.55), 0 0 30px var(--glow);
+      border-color: var(--gold);
+    }
+
+    .game-card:hover::before { opacity: 1; }
+    .game-card:hover::after  { left: 100%; }
+
+    /* --- Card icon (emoji or text symbol) --- */
+    .card-icon {
+      font-size: 3.2rem;
+      line-height: 1;
+      filter: drop-shadow(0 0 8px rgba(201,168,76,0.4));
+      transition: transform 0.3s ease;
+    }
+
+    .game-card:hover .card-icon { transform: scale(1.15) rotate(-4deg); }
+
+    /* --- Game title --- */
+    .card-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.55rem;
+      font-weight: 700;
+      color: var(--gold-light);
+      letter-spacing: 0.04em;
+    }
+
+    /* --- Short description beneath the title --- */
+    .card-desc {
+      font-size: 0.95rem;
+      font-weight: 300;
+      color: rgba(245,234,216,0.6);
+      line-height: 1.65;
+      max-width: 26ch;
+    }
+
+    /* --- "Play Now" chip button --- */
+    .card-cta {
+      margin-top: 0.5rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: transparent;
+      border: 1px solid var(--gold-dim);
+      color: var(--gold);
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      padding: 0.5rem 1.4rem;
+      border-radius: 2px;
+      transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+    }
+
+    .game-card:hover .card-cta {
+      background: var(--gold);
+      border-color: var(--gold);
+      color: var(--bg-deep);
+    }
+
+    /* =========================================================
+       FOOTER
+    ========================================================= -->
+    */
+    footer {
+      text-align: center;
+      padding: 2rem;
+      font-size: 0.8rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(245,234,216,0.2);
+      border-top: 1px solid rgba(201,168,76,0.1);
+    }
+
+    /* =========================================================
+       RESPONSIVE TWEAKS
+    ========================================================= -->
+    */
+    @media (max-width: 480px) {
+      #games-grid { grid-template-columns: 1fr; }
+      h1 { font-size: 3rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- =========================================================
+       HEADER
+       Edit the title, subtitle, and crown emoji as you like.
+  ========================================================= -->
+  <header>
+    <div class="crown">♛</div>
+    <h1>Casino Royale</h1>
+    <p class="subtitle">Place your bets &amp; choose your game</p>
+  </header>
+
+
+  <!-- =========================================================
+       GAMES GRID
+       ─────────────────────────────────────────────────────────
+       TO ADD A NEW GAME:
+         1. Copy one of the <a class="game-card"> blocks below.
+         2. Update the href to point to your new .html file.
+         3. Change the card-icon, card-title, and card-desc.
+         4. Add a new nth-child stagger rule in the CSS:
+              .game-card:nth-child(4) { animation-delay: 0.60s; }
+              .game-card:nth-child(5) { animation-delay: 0.75s; }
+            (increment the delay by ~0.15s per card)
+  ========================================================= -->
+  <main id="games-grid">
+
+    <!-- ── CARD 1: Baccarat / Blackjack / Ultimate Texas Hold'em ── -->
+    <a class="game-card" href="Bacc_BJ_UTH.html">
+      <span class="card-icon">🃏</span>
+      <span class="card-title">Bacc · BJ · UTH</span>
+      <p class="card-desc">
+        Three classics in one — Baccarat, Blackjack, and Ultimate Texas Hold'em.
+        Beat the dealer or the house at every table.
+      </p>
+      <span class="card-cta">Play Now ›</span>
+    </a>
+
+    <!-- ── CARD 2: Mines ── -->
+    <a class="game-card" href="mines.html">
+      <span class="card-icon">💣</span>
+      <span class="card-title">Mines</span>
+      <p class="card-desc">
+        Navigate the minefield and cash out before it all blows up.
+        Higher risk, higher reward.
+      </p>
+      <span class="card-cta">Play Now ›</span>
+    </a>
+
+    <!-- ── CARD 3: Plinko ── -->
+    <a class="game-card" href="plinko.html">
+      <span class="card-icon">🔮</span>
+      <span class="card-title">Plinko</span>
+      <p class="card-desc">
+        Drop the chip, watch it bounce, and hope it lands in the right slot.
+        Pure, satisfying chaos.
+      </p>
+      <span class="card-cta">Play Now ›</span>
+    </a>
+
+    <!-- ── FUTURE GAMES GO HERE ──
+         Example template:
+
+    <a class="game-card" href="your-game.html">
+      <span class="card-icon">🎰</span>
+      <span class="card-title">Your Game</span>
+      <p class="card-desc">
+        Short description of the game goes here.
+      </p>
+      <span class="card-cta">Play Now ›</span>
+    </a>
+    -->
+
+  </main><!-- /#games-grid -->
+
+
+  <!-- =========================================================
+       FOOTER
+       Edit the text below as you like.
+  ========================================================= -->
+  <footer>
+    <p>♠ Casino Royale &nbsp;·&nbsp; Play responsibly ♣</p>
+  </footer>
+
+</body>
+</html>
