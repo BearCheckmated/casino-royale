@@ -648,17 +648,17 @@
     <div class="panel" id="panel-bacc">
         <div class="table">
             <div class="bacc-options">
-                <div class="bacc-opt" id="bopt-banker" onclick="baccSel('banker')">
-                    <div class="bacc-opt-name">Banker</div>
-                    <div class="bacc-opt-odds">Pays 0.95 : 1</div>
+                <div class="bacc-opt" id="bopt-player" onclick="baccPick('player')">
+                    <div class="bacc-opt-name">PLAYER</div>
+                    <div class="bacc-opt-payout">1:1</div>
                 </div>
-                <div class="bacc-opt" id="bopt-tie" onclick="baccSel('tie')">
-                    <div class="bacc-opt-name">Tie</div>
-                    <div class="bacc-opt-odds">Pays 8 : 1</div>
+                <div class="bacc-opt" id="bopt-tie" onclick="baccPick('tie')">
+                    <div class="bacc-opt-name">TIE</div>
+                    <div class="bacc-opt-payout">8:1</div>
                 </div>
-                <div class="bacc-opt" id="bopt-player" onclick="baccSel('player')">
-                    <div class="bacc-opt-name">Player</div>
-                    <div class="bacc-opt-odds">Pays 1 : 1</div>
+                <div class="bacc-opt" id="bopt-banker" onclick="baccPick('banker')">
+                    <div class="bacc-opt-name">BANKER</div>
+                    <div class="bacc-opt-payout">0.95:1</div>
                 </div>
             </div>
 
@@ -1077,111 +1077,109 @@
         },3200);
         }
 
-        /* ════════════════════════════════════════
+/* ════════════════════════════════════════
         BACCARAT
         ════════════════════════════════════════ */
-        let baccDeck=[], baccP=[], baccBnk=[], baccAmt=0, baccSel=null;
+        let baccDeck=[], baccP=[], baccBnk=[], baccAmt=0, baccChoice=null;
 
         function baccVal(hand){return hand.reduce((s,c)=>{
-        if(['J','Q','K','10'].includes(c.r))return s;
-        if(c.r==='A')return s+1;
-        return s+(+c.r);
+            if(['J','Q','K','10'].includes(c.r))return s;
+            if(c.r==='A')return s+1;
+            return s+(+c.r);
         },0)%10;}
 
-        function baccSel2(type){
-        baccSel=type;
-        document.querySelectorAll('.bacc-opt').forEach(e=>e.classList.remove('sel'));
-        document.getElementById('bopt-'+type).classList.add('sel');
-        const labels={banker:'Banker',tie:'Tie',player:'Player'};
-        document.getElementById('bacc-sel-label').textContent=labels[type];
-        document.getElementById('bacc-sel-label').style.color='var(--gold)';
+        function baccSel(type){
+            baccChoice=type;
+            document.querySelectorAll('.bacc-opt').forEach(e=>e.classList.remove('sel'));
+            document.getElementById('bopt-'+type).classList.add('sel');
+            const labels={banker:'Banker',tie:'Tie',player:'Player'};
+            document.getElementById('bacc-sel-label').textContent=labels[type];
+            document.getElementById('bacc-sel-label').style.color='var(--gold)';
         }
-        // override click handler name collision
-        window.baccSel = baccSel2;
 
         function baccBet(n){if(baccAmt+n>balance)return;baccAmt+=n;document.getElementById('bacc-bet-disp').textContent=baccAmt;}
         function baccClear(){baccAmt=0;document.getElementById('bacc-bet-disp').textContent=0;}
 
         function baccUpdateScores(){
-        document.getElementById('bacc-pval').textContent=baccVal(baccP);
-        document.getElementById('bacc-bval').textContent=baccVal(baccBnk);
+            document.getElementById('bacc-pval').textContent=baccVal(baccP);
+            document.getElementById('bacc-bval').textContent=baccVal(baccBnk);
         }
 
         function baccDraw(id,hand,delay=0){
-        const c=baccDeck.pop();
-        hand.push(c);
-        document.getElementById(id).innerHTML=hand.map((x,i)=>cardHtml(x,false,i*0.07)).join('');
-        baccUpdateScores();
+            const c=baccDeck.pop();
+            hand.push(c);
+            document.getElementById(id).innerHTML=hand.map((x,i)=>cardHtml(x,false,i*0.07)).join('');
+            baccUpdateScores();
         }
 
         function baccDeal(){
-        if(!baccSel){setResult('bacc-result','Choose Banker, Tie, or Player.');return;}
-        if(baccAmt<=0){setResult('bacc-result','Place a bet first.');return;}
-        if(baccAmt>balance){setResult('bacc-result','Insufficient chips.');return;}
+            if(!baccChoice){setResult('bacc-result','Choose Banker, Tie, or Player.');return;}
+            if(baccAmt<=0){setResult('bacc-result','Place a bet first.');return;}
+            if(baccAmt>balance){setResult('bacc-result','Insufficient chips.');return;}
 
-        baccDeck=mkDeck(8);
-        baccP=[]; baccBnk=[];
-        updateBal(-baccAmt);
-        setResult('bacc-result','');
-        document.getElementById('bacc-deal').disabled=true;
-        document.getElementById('bacc-player').innerHTML='';
-        document.getElementById('bacc-banker').innerHTML='';
-        document.getElementById('bacc-pval').textContent='';
-        document.getElementById('bacc-bval').textContent='';
+            baccDeck=mkDeck(8);
+            baccP=[]; baccBnk=[];
+            updateBal(-baccAmt);
+            setResult('bacc-result','');
+            document.getElementById('bacc-deal').disabled=true;
+            document.getElementById('bacc-player').innerHTML='';
+            document.getElementById('bacc-banker').innerHTML='';
+            document.getElementById('bacc-pval').textContent='';
+            document.getElementById('bacc-bval').textContent='';
 
-        // Deal 2 to each
-        baccDraw('bacc-player',baccP);
-        baccDraw('bacc-banker',baccBnk);
-        baccDraw('bacc-player',baccP);
-        baccDraw('bacc-banker',baccBnk);
+            // Deal 2 to each
+            baccDraw('bacc-player',baccP);
+            baccDraw('bacc-banker',baccBnk);
+            baccDraw('bacc-player',baccP);
+            baccDraw('bacc-banker',baccBnk);
 
-        const pv=baccVal(baccP), bv=baccVal(baccBnk);
+            const pv=baccVal(baccP), bv=baccVal(baccBnk);
 
-        // Naturals
-        if(pv>=8||bv>=8){ baccResolve(); return; }
+            // Naturals
+            if(pv>=8||bv>=8){ baccResolve(); return; }
 
-        // Player draw rule
-        let pDrewCard=null;
-        if(pv<=5){ baccDraw('bacc-player',baccP); pDrewCard=baccP[baccP.length-1]; }
+            // Player draw rule
+            let pDrewCard=null;
+            if(pv<=5){ baccDraw('bacc-player',baccP); pDrewCard=baccP[baccP.length-1]; }
 
-        // Banker draw rule
-        const bvNow=baccVal(baccBnk);
-        if(pDrewCard===null){
-        if(bvNow<=5) baccDraw('bacc-banker',baccBnk);
-        } else {
-        const pdc=['J','Q','K','10'].includes(pDrewCard.r)?0:pDrewCard.r==='A'?1:+pDrewCard.r;
-        let bankerDraws=false;
-        if(bvNow<=2) bankerDraws=true;
-        else if(bvNow===3) bankerDraws=pdc!==8;
-        else if(bvNow===4) bankerDraws=[2,3,4,5,6,7].includes(pdc);
-        else if(bvNow===5) bankerDraws=[4,5,6,7].includes(pdc);
-        else if(bvNow===6) bankerDraws=[6,7].includes(pdc);
-        if(bankerDraws) baccDraw('bacc-banker',baccBnk);
-        }
+            // Banker draw rule
+            const bvNow=baccVal(baccBnk);
+            if(pDrewCard===null){
+                if(bvNow<=5) baccDraw('bacc-banker',baccBnk);
+            } else {
+                const pdc=['J','Q','K','10'].includes(pDrewCard.r)?0:pDrewCard.r==='A'?1:+pDrewCard.r;
+                let bankerDraws=false;
+                if(bvNow<=2) bankerDraws=true;
+                else if(bvNow===3) bankerDraws=pdc!==8;
+                else if(bvNow===4) bankerDraws=[2,3,4,5,6,7].includes(pdc);
+                else if(bvNow===5) bankerDraws=[4,5,6,7].includes(pdc);
+                else if(bvNow===6) bankerDraws=[6,7].includes(pdc);
+                if(bankerDraws) baccDraw('bacc-banker',baccBnk);
+            }
 
-        baccResolve();
+            baccResolve();
         }
 
         function baccResolve(){
-        const pv=baccVal(baccP), bv=baccVal(baccBnk);
-        let winner = pv>bv?'player':bv>pv?'banker':'tie';
-        let win=0,msg='',cls='';
+            const pv=baccVal(baccP), bv=baccVal(baccBnk);
+            let winner = pv>bv?'player':bv>pv?'banker':'tie';
+            let win=0,msg='',cls='';
 
-        if(winner==='tie'){
-        if(baccSel==='tie'){win=baccAmt*9;msg='🎉 Tie! Pays 8:1!';cls='win';}
-        else{win=baccAmt;msg='🤝 Tie — Bet returned.';cls='push';}
-        } else if(winner===baccSel){
-        if(baccSel==='banker'){win=Math.floor(baccAmt*1.95);msg='🎉 Banker wins! (5% commission)';cls='win';}
-        else{win=baccAmt*2;msg='🎉 Player wins!';cls='win';}
-        } else {
-        msg=`💔 ${winner.charAt(0).toUpperCase()+winner.slice(1)} wins.`;cls='lose';
-        }
+            if(winner==='tie'){
+                if(baccChoice==='tie'){win=baccAmt*9;msg='🎉 Tie! Pays 8:1!';cls='win';}
+                else{win=baccAmt;msg='🤝 Tie — Bet returned.';cls='push';}
+            } else if(winner===baccChoice){
+                if(baccChoice==='banker'){win=Math.floor(baccAmt*1.95);msg='🎉 Banker wins! (5% commission)';cls='win';}
+                else{win=baccAmt*2;msg='🎉 Player wins!';cls='win';}
+            } else {
+                msg=`💔 ${winner.charAt(0).toUpperCase()+winner.slice(1)} wins.`;cls='lose';
+            }
 
-        updateBal(win);
-        setResult('bacc-result',msg,cls);
-        document.getElementById('bacc-deal').disabled=false;
-        baccAmt=0;
-        document.getElementById('bacc-bet-disp').textContent=0;
+            updateBal(win);
+            setResult('bacc-result',msg,cls);
+            document.getElementById('bacc-deal').disabled=false;
+            baccAmt=0;
+            document.getElementById('bacc-bet-disp').textContent=0;
         }
     </script>
 </body>
