@@ -373,7 +373,7 @@
         .nav-links { display: flex; gap: 1.5rem; list-style: none; }
         .nav-links a { color: rgba(245,234,216,0.45); text-decoration: none; font-size: 0.8rem; letter-spacing: 0.2em; text-transform: uppercase; transition: color 0.2s; }
         .nav-links a:hover { color: var(--gold); }
-        
+
         /* ── BUTTONS ── */
         .actions {
             display: flex;
@@ -673,15 +673,15 @@
     <div class="panel" id="panel-bacc">
         <div class="table">
             <div class="bacc-options">
-                <div class="bacc-opt" id="bopt-player" onclick="baccPick('player')">
+                <div class="bacc-opt" id="bopt-player" onclick="baccSel('player')">
                     <div class="bacc-opt-name">PLAYER</div>
                     <div class="bacc-opt-payout">1:1</div>
                 </div>
-                <div class="bacc-opt" id="bopt-tie" onclick="baccPick('tie')">
+                <div class="bacc-opt" id="bopt-tie" onclick="baccSel('tie')">
                     <div class="bacc-opt-name">TIE</div>
                     <div class="bacc-opt-payout">8:1</div>
                 </div>
-                <div class="bacc-opt" id="bopt-banker" onclick="baccPick('banker')">
+                <div class="bacc-opt" id="bopt-banker" onclick="baccSel('banker')">
                     <div class="bacc-opt-name">BANKER</div>
                     <div class="bacc-opt-payout">0.95:1</div>
                 </div>
