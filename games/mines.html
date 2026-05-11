@@ -3,146 +3,277 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mines - Betting Game</title>
+    <title>Mines — Casino Folino</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900&family=Cormorant+Garamond:wght@300;400;600&display=swap" rel="stylesheet"/>
     <style>
+        :root {
+            --bg-deep:    #0a0a0f;
+            --bg-felt:    #0d1a12;
+            --gold:       #c9a84c;
+            --gold-light: #f0d080;
+            --gold-dim:   #6e5a28;
+            --cream:      #f5ead8;
+            --card-bg:    #12201a;
+            --border:     rgba(201,168,76,0.35);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #1a1a2e;
-            color: #fff;
+            font-family: 'Cormorant Garamond', serif;
+            background-color: var(--bg-deep);
+            color: var(--cream);
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin: 0;
-            padding: 20px;
+            min-height: 100vh;
+            padding: 0 0 40px;
         }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 50% 0%, rgba(13,26,18,0.95) 0%, transparent 70%),
+                repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.012) 2px, rgba(255,255,255,0.012) 4px),
+                var(--bg-felt);
+            z-index: -1;
+        }
+
+        /* NAV */
+        nav {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.2rem 2rem;
+            border-bottom: 1px solid rgba(201,168,76,0.15);
+            margin-bottom: 2rem;
+        }
+        .nav-home {
+            font-family: 'Playfair Display', serif;
+            font-size: 1rem;
+            color: var(--gold);
+            text-decoration: none;
+            letter-spacing: 0.1em;
+        }
+        .nav-home:hover { color: var(--gold-light); }
+        .nav-links { display: flex; gap: 1.5rem; list-style: none; }
+        .nav-links a {
+            color: rgba(245,234,216,0.45);
+            text-decoration: none;
+            font-size: 0.8rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            transition: color 0.2s;
+        }
+        .nav-links a:hover { color: var(--gold); }
+
         .container {
-            background-color: #16213e;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            max-width: 400px;
+            background: var(--card-bg);
+            padding: 28px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            max-width: 420px;
             width: 100%;
         }
+
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #0f3460;
+            padding-bottom: 14px;
+            border-bottom: 1px solid rgba(201,168,76,0.2);
         }
+
+        .header h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            color: var(--gold-light);
+            letter-spacing: 0.1em;
+        }
+
+        .credits-block { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+
         .credits {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: #f1c40f;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--gold);
+            letter-spacing: 0.05em;
         }
+
+        .refill-btn {
+            background: transparent;
+            border: 1px solid var(--gold-dim);
+            color: var(--gold-dim);
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 0.72rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border-radius: 2px;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: auto;
+        }
+        .refill-btn:hover {
+            background: var(--gold-dim);
+            color: var(--bg-deep);
+            border-color: var(--gold-dim);
+        }
+
         .controls {
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 14px;
             margin-bottom: 20px;
         }
+
         .input-group {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            font-size: 0.95rem;
+            color: rgba(245,234,216,0.7);
+            letter-spacing: 0.05em;
         }
-        input {
-            background-color: #0f3460;
-            color: white;
-            border: none;
-            padding: 10px;
-            border-radius: 6px;
-            width: 100px;
+
+        input[type="number"] {
+            background: rgba(10,10,15,0.6);
+            color: var(--cream);
+            border: 1px solid rgba(201,168,76,0.25);
+            padding: 9px 12px;
+            border-radius: 4px;
+            width: 110px;
             font-size: 1rem;
+            font-family: 'Cormorant Garamond', serif;
             text-align: right;
+            transition: border-color 0.2s;
         }
+        input[type="number"]:focus { outline: none; border-color: var(--gold-dim); }
+
         button {
-            background-color: #e94560;
-            color: white;
+            background: var(--gold-dim);
+            color: var(--bg-deep);
             border: none;
-            padding: 12px;
-            border-radius: 6px;
-            font-size: 1.1rem;
-            font-weight: bold;
+            padding: 13px;
+            border-radius: 4px;
+            font-family: 'Playfair Display', serif;
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
             cursor: pointer;
             transition: background 0.2s;
             width: 100%;
         }
-        button:hover { background-color: #ff5270; }
-        button:disabled {
-            background-color: #555;
-            cursor: not-allowed;
-            opacity: 0.7;
-        }
+        button:hover { background: var(--gold); }
+        button:disabled { background: rgba(110,90,40,0.35); color: rgba(245,234,216,0.3); cursor: not-allowed; }
+
         .cashout-btn {
-            background-color: #2ecc71;
+            background: #1a5c36;
+            color: #6effa8;
+            border: 1px solid #2ecc71;
             display: none;
-            margin-top: 10px;
+            margin-top: 8px;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
         }
-        .cashout-btn:hover { background-color: #27ae60; }
+        .cashout-btn:hover:not(:disabled) { background: #2ecc71; color: var(--bg-deep); }
+
         .grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 8px;
-            margin-bottom: 20px;
+            gap: 7px;
+            margin-bottom: 16px;
         }
+
         .tile {
-            background-color: #0f3460;
+            background: rgba(15,52,96,0.5);
+            border: 1px solid rgba(201,168,76,0.15);
             aspect-ratio: 1;
-            border-radius: 8px;
+            border-radius: 6px;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             cursor: pointer;
-            transition: transform 0.1s, background-color 0.2s;
+            transition: transform 0.1s, background 0.15s, border-color 0.15s;
         }
-        .tile:hover { filter: brightness(1.2); }
+        .tile:hover:not(.revealed-safe):not(.revealed-mine):not(.dimmed-mine) {
+            background: rgba(201,168,76,0.12);
+            border-color: var(--gold-dim);
+            transform: scale(1.04);
+        }
         .tile.revealed-safe {
-            background-color: #2ecc71;
+            background: rgba(46,204,113,0.2);
+            border-color: #2ecc71;
             cursor: default;
         }
         .tile.revealed-mine {
-            background-color: #e74c3c;
+            background: rgba(231,76,60,0.4);
+            border-color: #e74c3c;
             cursor: default;
         }
         .tile.dimmed-mine {
-            background-color: #c0392b;
-            opacity: 0.6;
+            background: rgba(192,57,43,0.2);
+            border-color: rgba(231,76,60,0.3);
+            opacity: 0.55;
             cursor: default;
         }
+
         .message {
             text-align: center;
-            font-size: 1.1rem;
-            min-height: 24px;
-            margin-top: 10px;
+            font-size: 1rem;
+            min-height: 22px;
+            color: rgba(245,234,216,0.65);
+            letter-spacing: 0.04em;
         }
+        .message.win  { color: #6effa8; }
+        .message.lose { color: #ff6b6b; }
     </style>
 </head>
 <body>
 
+<nav>
+    <a class="nav-home" href="webpage.html">♛ Casino Folino</a>
+    <ul class="nav-links">
+        <li><a href="about.html">About</a></li>
+        <li><a href="resume.html">Résumé</a></li>
+        <li><a href="https://github.com/BearCheckmated" target="_blank">GitHub</a></li>
+        <li><a href="https://www.linkedin.com/in/logan-folino-253ab3381/" target="_blank">LinkedIn</a></li>
+    </ul>
+</nav>
+
 <div class="container">
     <div class="header">
-        <h2>MINES</h2>
-        <div class="credits">Credits: <span id="credit-display">1000.00</span></div>
+        <h2>💣 Mines</h2>
+        <div class="credits-block">
+            <div class="credits">$<span id="credit-display">1000.00</span></div>
+            <button class="refill-btn" onclick="refillCredits()">⟳ Refill to $1000</button>
+        </div>
     </div>
 
     <div class="controls">
         <div class="input-group">
-            <label>Bet Amount:</label>
+            <label>Bet Amount</label>
             <input type="number" id="bet-input" value="10" min="1" step="1">
         </div>
         <div class="input-group">
-            <label>Mines (1-24):</label>
+            <label>Mines (1–24)</label>
             <input type="number" id="mine-input" value="3" min="1" max="24" step="1">
         </div>
         <button id="start-btn" onclick="startGame()">Place Bet</button>
         <button id="cashout-btn" class="cashout-btn" onclick="cashOut()">Cash Out</button>
     </div>
 
-    <div class="grid" id="grid">
-        </div>
+    <div class="grid" id="grid"></div>
 
     <div class="message" id="message">Place a bet to start!</div>
 </div>
@@ -153,18 +284,44 @@
     let betAmount = 0;
     let mineCount = 0;
     let safeClicks = 0;
-    let gridData = []; // true = mine, false = safe
+    let gridData = [];
     const totalTiles = 25;
 
     const creditDisplay = document.getElementById('credit-display');
-    const startBtn = document.getElementById('start-btn');
-    const cashoutBtn = document.getElementById('cashout-btn');
-    const messageEl = document.getElementById('message');
-    const gridEl = document.getElementById('grid');
-    const betInput = document.getElementById('bet-input');
-    const mineInput = document.getElementById('mine-input');
+    const startBtn      = document.getElementById('start-btn');
+    const cashoutBtn    = document.getElementById('cashout-btn');
+    const messageEl     = document.getElementById('message');
+    const gridEl        = document.getElementById('grid');
+    const betInput      = document.getElementById('bet-input');
+    const mineInput     = document.getElementById('mine-input');
 
-    // Initialize blank grid
+    function updateCredits() {
+        creditDisplay.innerText = credits.toFixed(2);
+    }
+
+    function refillCredits() {
+        if (isPlaying) return;
+        credits = 1000.0;
+        updateCredits();
+        setMessage('Credits refilled to $1,000!', '');
+    }
+
+    function setMessage(text, cls) {
+        messageEl.innerText = text;
+        messageEl.className = 'message ' + (cls || '');
+    }
+
+    function getMultiplier(mines, clicks) {
+        if (clicks === 0) return 1.00;
+        let prob = 1.0;
+        let remaining = 25, safe = 25 - mines;
+        for (let i = 0; i < clicks; i++) {
+            prob *= safe / remaining;
+            remaining--; safe--;
+        }
+        return 0.99 / prob;
+    }
+
     function createGrid() {
         gridEl.innerHTML = '';
         for (let i = 0; i < totalTiles; i++) {
@@ -175,115 +332,72 @@
         }
     }
 
-    function updateCredits() {
-        creditDisplay.innerText = credits.toFixed(2);
-    }
-
-    // Calculates multiplier based on probability + 1% house edge
-    function getMultiplier(mines, clicks) {
-        if (clicks === 0) return 1.00;
-        let prob = 1.0;
-        let remainingTiles = 25;
-        let remainingSafe = 25 - mines;
-        
-        for (let i = 0; i < clicks; i++) {
-            prob *= (remainingSafe / remainingTiles);
-            remainingTiles--;
-            remainingSafe--;
-        }
-        
-        const houseEdgeRTP = 0.99; 
-        return (houseEdgeRTP / prob);
-    }
-
     function startGame() {
         betAmount = parseFloat(betInput.value);
         mineCount = parseInt(mineInput.value);
 
         if (isNaN(betAmount) || betAmount <= 0 || betAmount > credits) {
-            messageEl.innerText = "Invalid bet amount!";
-            return;
+            setMessage('Invalid bet amount!', 'lose'); return;
         }
         if (isNaN(mineCount) || mineCount < 1 || mineCount > 24) {
-            messageEl.innerText = "Mines must be between 1 and 24!";
-            return;
+            setMessage('Mines must be between 1 and 24!', 'lose'); return;
         }
 
-        // Deduct bet
         credits -= betAmount;
         updateCredits();
-
-        // Setup Game State
         isPlaying = true;
         safeClicks = 0;
+
         startBtn.style.display = 'none';
         cashoutBtn.style.display = 'block';
-        cashoutBtn.disabled = true; // Can't cash out on 0 clicks
+        cashoutBtn.disabled = true;
         cashoutBtn.innerText = `Cash Out ($${betAmount.toFixed(2)})`;
-        messageEl.innerText = "Good luck!";
-        
-        // Generate Mines
+        setMessage('Good luck — find the gems!', '');
+
         gridData = Array(totalTiles).fill(false);
-        for (let i = 0; i < mineCount; i++) {
-            gridData[i] = true;
-        }
-        
-        // Fisher-Yates Shuffle
+        for (let i = 0; i < mineCount; i++) gridData[i] = true;
         for (let i = gridData.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [gridData[i], gridData[j]] = [gridData[j], gridData[i]];
         }
 
-        createGrid();
-        
-        // Disable inputs during play
         betInput.disabled = true;
         mineInput.disabled = true;
+        createGrid();
     }
 
-    function handleTileClick(index, tileElement) {
-        if (!isPlaying || tileElement.classList.contains('revealed-safe')) return;
-
+    function handleTileClick(index, tile) {
+        if (!isPlaying || tile.classList.contains('revealed-safe')) return;
         if (gridData[index]) {
-            // Hit a mine
             loseGame(index);
         } else {
-            // Safe tile
             safeClicks++;
-            tileElement.classList.add('revealed-safe');
-            tileElement.innerText = '💎';
-            
-            const currentMulti = getMultiplier(mineCount, safeClicks);
-            const currentWin = betAmount * currentMulti;
-            
+            tile.classList.add('revealed-safe');
+            tile.innerText = '💎';
+            const multi = getMultiplier(mineCount, safeClicks);
+            const win   = betAmount * multi;
             cashoutBtn.disabled = false;
-            cashoutBtn.innerText = `Cash Out ($${currentWin.toFixed(2)}) [${currentMulti.toFixed(2)}x]`;
-
-            // Check if player cleared all safe tiles (auto-win)
-            if (safeClicks === (totalTiles - mineCount)) {
-                cashOut();
-            }
+            cashoutBtn.innerText = `Cash Out ($${win.toFixed(2)}) [${multi.toFixed(2)}x]`;
+            setMessage(`${safeClicks} gem${safeClicks > 1 ? 's' : ''} found — current: ${multi.toFixed(2)}x`, 'win');
+            if (safeClicks === totalTiles - mineCount) cashOut();
         }
     }
 
     function loseGame(fatalIndex) {
         isPlaying = false;
-        messageEl.innerText = "Boom! You hit a mine and lost your bet.";
+        setMessage('💥 Boom! You hit a mine.', 'lose');
         revealAll(fatalIndex);
         resetControls();
     }
 
     function cashOut() {
         if (!isPlaying || safeClicks === 0) return;
-        
         const multi = getMultiplier(mineCount, safeClicks);
-        const winAmount = betAmount * multi;
-        
-        credits += winAmount;
+        const win   = betAmount * multi;
+        credits += win;
         updateCredits();
-        
         isPlaying = false;
-        messageEl.innerText = `You cashed out and won $${winAmount.toFixed(2)}!`;
+        setMessage(`✨ Cashed out for $${win.toFixed(2)} (${multi.toFixed(2)}x)!`, 'win');
         revealAll(-1);
         resetControls();
     }
@@ -292,15 +406,11 @@
         const tiles = gridEl.children;
         for (let i = 0; i < totalTiles; i++) {
             if (gridData[i]) {
-                if (i === fatalIndex) {
-                    tiles[i].classList.add('revealed-mine');
-                    tiles[i].innerText = '💣';
-                } else {
-                    tiles[i].classList.add('dimmed-mine');
-                    tiles[i].innerText = '💣';
-                }
+                tiles[i].classList.remove('revealed-safe');
+                tiles[i].classList.add(i === fatalIndex ? 'revealed-mine' : 'dimmed-mine');
+                tiles[i].innerText = '💣';
             } else if (!tiles[i].classList.contains('revealed-safe')) {
-                 tiles[i].style.opacity = '0.4';
+                tiles[i].style.opacity = '0.35';
             }
         }
     }
@@ -312,10 +422,8 @@
         mineInput.disabled = false;
     }
 
-    // Init
     createGrid();
     updateCredits();
 </script>
-
 </body>
 </html>

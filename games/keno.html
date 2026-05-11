@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keno — Casino Folino</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Cormorant+Garamond:wght@300;400;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+    <style>
+        :root {
+            --bg-deep:    #0a0a0f;
+            --bg-felt:    #0d1a12;
+            --gold:       #c9a84c;
+            --gold-light: #f0d080;
+            --gold-dim:   #6e5a28;
+            --cream:      #f5ead8;
+            --card-bg:    #12201a;
+            --border:     rgba(201,168,76,0.35);
+            --green:      #2ecc71;
+            --red:        #e74c3c;
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Cormorant Garamond', serif;
+            background: var(--bg-deep);
+            color: var(--cream);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 50% 0%, rgba(13,26,18,0.95) 0%, transparent 70%),
+                repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.012) 2px, rgba(255,255,255,0.012) 4px),
+                var(--bg-felt);
+            z-index: -1;
+        }
+
+        /* NAV */
+        nav {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.2rem 2rem;
+            border-bottom: 1px solid rgba(201,168,76,0.15);
+        }
+        .nav-home { font-family: 'Playfair Display', serif; font-size: 1rem; color: var(--gold); text-decoration: none; letter-spacing: 0.1em; }
+        .nav-home:hover { color: var(--gold-light); }
+        .nav-links { display: flex; gap: 1.5rem; list-style: none; }
+        .nav-links a { color: rgba(245,234,216,0.45); text-decoration: none; font-size: 0.8rem; letter-spacing: 0.2em; text-transform: uppercase; transition: color 0.2s; }
+        .nav-links a:hover { color: var(--gold); }
+
+        /* LAYOUT */
+        .page-wrap {
+            width: 100%;
+            max-width: 960px;
+            padding: 2rem 1.5rem 4rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        h2.game-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            color: var(--gold-light);
+            letter-spacing: 0.08em;
+            text-align: center;
+        }
+
+        .main-panel {
+            display: grid;
+            grid-template-columns: 1fr 260px;
+            gap: 1.5rem;
+            align-items: start;
+        }
+
+        @media (max-width: 680px) { .main-panel { grid-template-columns: 1fr; } }
+
+        /* BOARD */
+        .board-wrap {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1.5rem;
+        }
+
+        .board-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            font-size: 0.82rem;
+            color: rgba(245,234,216,0.5);
+            letter-spacing: 0.08em;
+        }
+
+        .picks-counter { color: var(--gold); font-family: 'JetBrains Mono', monospace; }
+
+        .keno-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 5px;
+        }
+
+        .keno-num {
+            aspect-ratio: 1;
+            border-radius: 4px;
+            border: 1px solid rgba(201,168,76,0.15);
+            background: rgba(10,10,15,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: clamp(0.6rem, 1.3vw, 0.78rem);
+            cursor: pointer;
+            transition: all 0.15s;
+            user-select: none;
+        }
+
+        .keno-num:hover:not(.drawn):not(.disabled) {
+            background: rgba(201,168,76,0.12);
+            border-color: var(--gold-dim);
+        }
+
+        .keno-num.picked {
+            background: rgba(201,168,76,0.2);
+            border-color: var(--gold);
+            color: var(--gold-light);
+        }
+
+        .keno-num.drawn {
+            background: rgba(46,204,113,0.22);
+            border-color: var(--green);
+            color: #6effa8;
+            animation: ballDrop 0.3s ease;
+        }
+
+        .keno-num.hit {
+            background: rgba(46,204,113,0.4) !important;
+            border-color: #6effa8 !important;
+            color: #fff !important;
+            box-shadow: 0 0 10px rgba(46,204,113,0.4);
+        }
+
+        .keno-num.miss {
+            opacity: 0.35;
+        }
+
+        .keno-num.disabled { cursor: default; }
+
+        @keyframes ballDrop {
+            0%   { transform: scale(0.5); opacity: 0; }
+            60%  { transform: scale(1.2); }
+            100% { transform: scale(1);   opacity: 1; }
+        }
+
+        /* SIDEBAR */
+        .sidebar { display: flex; flex-direction: column; gap: 1rem; }
+
+        .panel {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1.2rem 1.4rem;
+        }
+
+        .panel-label {
+            font-size: 0.72rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--gold-dim);
+            margin-bottom: 0.75rem;
+        }
+
+        .credits-row { display: flex; justify-content: space-between; align-items: center; }
+        .credits-val { font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; color: var(--gold); }
+
+        .refill-btn {
+            background: transparent;
+            border: 1px solid var(--gold-dim);
+            color: var(--gold-dim);
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 0.72rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border-radius: 2px;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: auto;
+        }
+        .refill-btn:hover { background: var(--gold-dim); color: var(--bg-deep); }
+
+        .input-group { display: flex; flex-direction: column; gap: 6px; }
+        .input-group label { font-size: 0.8rem; color: rgba(245,234,216,0.55); }
+
+        input[type="number"] {
+            background: rgba(10,10,15,0.7);
+            color: var(--cream);
+            border: 1px solid rgba(201,168,76,0.25);
+            padding: 9px 12px;
+            border-radius: 4px;
+            width: 100%;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            transition: border-color 0.2s;
+        }
+        input[type="number"]:focus { outline: none; border-color: var(--gold-dim); }
+
+        .action-btn {
+            width: 100%;
+            padding: 13px;
+            border: none;
+            border-radius: 4px;
+            font-family: 'Playfair Display', serif;
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-play { background: var(--gold-dim); color: var(--bg-deep); }
+        .btn-play:hover:not(:disabled) { background: var(--gold); }
+        .btn-play:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .btn-clear {
+            background: transparent;
+            border: 1px solid rgba(201,168,76,0.2);
+            color: rgba(245,234,216,0.45);
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 0.82rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            padding: 8px;
+            width: 100%;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        .btn-clear:hover:not(:disabled) { border-color: var(--gold-dim); color: var(--gold-dim); }
+        .btn-clear:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        .result-msg {
+            text-align: center;
+            font-size: 1rem;
+            font-weight: 600;
+            min-height: 20px;
+            letter-spacing: 0.04em;
+        }
+        .result-msg.win  { color: #6effa8; }
+        .result-msg.lose { color: #ff6b6b; }
+        .result-msg.info { color: rgba(245,234,216,0.5); }
+
+        /* PAYOUT TABLE */
+        .payout-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+        }
+        .payout-table th {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 0.7rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--gold-dim);
+            padding: 4px 6px;
+            text-align: left;
+            border-bottom: 1px solid rgba(201,168,76,0.15);
+        }
+        .payout-table td {
+            padding: 4px 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: rgba(245,234,216,0.6);
+        }
+        .payout-table tr.highlight td { color: var(--gold-light); background: rgba(201,168,76,0.08); }
+        .payout-table tr.zero td { color: rgba(245,234,216,0.25); }
+
+        /* hits badge */
+        .hits-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a class="nav-home" href="webpage.html">♛ Casino Folino</a>
+    <ul class="nav-links">
+        <li><a href="about.html">About</a></li>
+        <li><a href="resume.html">Résumé</a></li>
+        <li><a href="https://github.com/BearCheckmated" target="_blank">GitHub</a></li>
+        <li><a href="https://www.linkedin.com/in/logan-folino-253ab3381/" target="_blank">LinkedIn</a></li>
+    </ul>
+</nav>
+
+<div class="page-wrap">
+    <h2 class="game-title">🎱 Keno</h2>
+
+    <div class="main-panel">
+
+        <!-- Board -->
+        <div class="board-wrap">
+            <div class="board-meta">
+                <span>Pick up to <strong style="color:var(--gold)">10</strong> numbers (1–80)</span>
+                <span class="picks-counter"><span id="picks-count">0</span> / 10 selected</span>
+            </div>
+            <div class="keno-grid" id="keno-grid"></div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+
+            <!-- Credits -->
+            <div class="panel">
+                <div class="panel-label">Balance</div>
+                <div class="credits-row">
+                    <div class="credits-val">$<span id="credit-display">1000.00</span></div>
+                    <button class="refill-btn" onclick="refillCredits()">⟳ Refill</button>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="panel" style="display:flex;flex-direction:column;gap:10px;">
+                <div class="input-group">
+                    <label>Bet Amount</label>
+                    <input type="number" id="bet-input" value="10" min="1" step="1">
+                </div>
+                <button class="action-btn btn-play" id="play-btn" onclick="playKeno()">Draw Balls</button>
+                <button class="btn-clear" id="clear-btn" onclick="clearPicks()">Clear Selection</button>
+                <div class="result-msg info" id="result-msg">Pick your numbers!</div>
+            </div>
+
+            <!-- Payout table -->
+            <div class="panel">
+                <div class="panel-label">Payouts (10 picks)</div>
+                <table class="payout-table" id="payout-table">
+                    <thead>
+                        <tr>
+                            <th>Hits</th>
+                            <th>Multiplier</th>
+                            <th>Payout</th>
+                        </tr>
+                    </thead>
+                    <tbody id="payout-body"></tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    // ── Payout tables keyed by number of picks ─────────────────────────────
+    // Format: index = number of hits → multiplier
+    const PAYOUTS = {
+        1:  [0, 3.5],
+        2:  [0, 0, 12],
+        3:  [0, 0, 2, 25],
+        4:  [0, 0, 1, 5, 75],
+        5:  [0, 0, 0.5, 2, 15, 300],
+        6:  [0, 0, 0, 1, 5, 50, 800],
+        7:  [0, 0, 0, 0.5, 3, 20, 200, 2000],
+        8:  [0, 0, 0, 0, 2, 10, 75, 500, 5000],
+        9:  [0, 0, 0, 0, 1, 5, 30, 150, 1000, 10000],
+        10: [0, 0, 0, 0, 0.5, 3, 10, 40, 100, 500, 5000],
+    };
+
+    let credits     = 1000;
+    let picks       = new Set();
+    let isPlaying   = false;
+    let drawnBalls  = [];
+
+    const gridEl       = document.getElementById('keno-grid');
+    const picksCounter = document.getElementById('picks-count');
+    const creditEl     = document.getElementById('credit-display');
+    const resultMsg    = document.getElementById('result-msg');
+    const playBtn      = document.getElementById('play-btn');
+    const clearBtn     = document.getElementById('clear-btn');
+
+    // ── Build grid ────────────────────────────────────────────────────────
+    function buildGrid() {
+        gridEl.innerHTML = '';
+        for (let n = 1; n <= 80; n++) {
+            const el = document.createElement('div');
+            el.className = 'keno-num';
+            el.textContent = n;
+            el.dataset.n = n;
+            el.onclick = () => togglePick(n, el);
+            gridEl.appendChild(el);
+        }
+    }
+
+    function getCell(n) { return gridEl.querySelector(`[data-n="${n}"]`); }
+
+    function togglePick(n, el) {
+        if (isPlaying) return;
+        if (picks.has(n)) {
+            picks.delete(n);
+            el.classList.remove('picked');
+        } else {
+            if (picks.size >= 10) { setMsg('Maximum 10 picks!', 'info'); return; }
+            picks.add(n);
+            el.classList.add('picked');
+        }
+        picksCounter.textContent = picks.size;
+        updatePayoutTable();
+    }
+
+    function clearPicks() {
+        if (isPlaying) return;
+        picks.forEach(n => getCell(n).classList.remove('picked'));
+        picks.clear();
+        picksCounter.textContent = 0;
+        updatePayoutTable();
+        setMsg('Pick your numbers!', 'info');
+    }
+
+    // ── Payout table ──────────────────────────────────────────────────────
+    function updatePayoutTable(hitCount = -1) {
+        const tbody = document.getElementById('payout-body');
+        tbody.innerHTML = '';
+        const count = picks.size || 1;
+        const table = PAYOUTS[Math.min(count, 10)];
+        const betAmt = parseFloat(document.getElementById('bet-input').value) || 10;
+
+        table.forEach((multi, hits) => {
+            const tr = document.createElement('tr');
+            if (multi === 0)   tr.className = 'zero';
+            if (hits === hitCount) tr.className = 'highlight';
+            tr.innerHTML = `
+                <td>${hits}</td>
+                <td>${multi}×</td>
+                <td>${multi > 0 ? ('$' + (betAmt * multi).toFixed(2)) : '—'}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // ── Play ──────────────────────────────────────────────────────────────
+    function playKeno() {
+        if (isPlaying) return;
+        if (picks.size === 0) { setMsg('Pick at least 1 number!', 'info'); return; }
+
+        const bet = parseFloat(document.getElementById('bet-input').value);
+        if (isNaN(bet) || bet <= 0 || bet > credits) { setMsg('Invalid bet!', 'lose'); return; }
+
+        credits -= bet;
+        updateCredits();
+        isPlaying = true;
+        playBtn.disabled = true;
+        clearBtn.disabled = true;
+
+        // Reset board display
+        for (let n = 1; n <= 80; n++) {
+            const el = getCell(n);
+            el.classList.remove('drawn', 'hit', 'miss');
+            el.classList.add('disabled');
+        }
+
+        // Draw 20 unique balls
+        const pool = Array.from({ length: 80 }, (_, i) => i + 1);
+        drawnBalls = [];
+        for (let i = pool.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [pool[i], pool[j]] = [pool[j], pool[i]];
+        }
+        drawnBalls = pool.slice(0, 20);
+
+        setMsg('Drawing…', 'info');
+
+        // Animate draws one by one
+        let idx = 0;
+        const drawInterval = setInterval(() => {
+            if (idx >= drawnBalls.length) {
+                clearInterval(drawInterval);
+                finishRound(bet);
+                return;
+            }
+            const n   = drawnBalls[idx];
+            const el  = getCell(n);
+            el.classList.add('drawn');
+            if (picks.has(n)) el.classList.add('hit');
+            idx++;
+        }, 120);
+    }
+
+    function finishRound(bet) {
+        const hits   = drawnBalls.filter(n => picks.has(n)).length;
+        const count  = picks.size;
+        const table  = PAYOUTS[Math.min(count, 10)];
+        const multi  = table[hits] || 0;
+        const win    = bet * multi;
+
+        // Dim non-drawn, non-picked
+        for (let n = 1; n <= 80; n++) {
+            const el = getCell(n);
+            if (!drawnBalls.includes(n) && !picks.has(n)) el.classList.add('miss');
+        }
+
+        updatePayoutTable(hits);
+
+        if (win > 0) {
+            credits += win;
+            updateCredits();
+            setMsg(`${hits} hit${hits !== 1 ? 's' : ''}! Won $${win.toFixed(2)} (${multi}×) 🎉`, 'win');
+        } else {
+            setMsg(`${hits} hit${hits !== 1 ? 's' : ''} — better luck next round!`, 'lose');
+        }
+
+        // Re-enable after short pause
+        setTimeout(() => {
+            isPlaying = false;
+            playBtn.disabled = false;
+            clearBtn.disabled = false;
+
+            // Reset board for next round
+            for (let n = 1; n <= 80; n++) {
+                const el = getCell(n);
+                el.classList.remove('drawn', 'hit', 'miss', 'disabled');
+                if (picks.has(n)) el.classList.add('picked');
+            }
+        }, 1800);
+    }
+
+    // ── Utils ─────────────────────────────────────────────────────────────
+    function updateCredits() { creditEl.innerText = credits.toFixed(2); }
+    function refillCredits() {
+        if (isPlaying) return;
+        credits = 1000;
+        updateCredits();
+        setMsg('Credits refilled to $1,000!', 'info');
+    }
+    function setMsg(text, cls) {
+        resultMsg.textContent = text;
+        resultMsg.className = 'result-msg ' + (cls || '');
+    }
+
+    // ── Init ──────────────────────────────────────────────────────────────
+    buildGrid();
+    updateCredits();
+    updatePayoutTable();
+</script>
+</body>
+</html>

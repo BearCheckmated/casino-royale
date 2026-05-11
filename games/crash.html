@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crash — Casino Folino</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Cormorant+Garamond:wght@300;400;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+    <style>
+        :root {
+            --bg-deep:    #0a0a0f;
+            --bg-felt:    #0d1a12;
+            --gold:       #c9a84c;
+            --gold-light: #f0d080;
+            --gold-dim:   #6e5a28;
+            --cream:      #f5ead8;
+            --card-bg:    #12201a;
+            --border:     rgba(201,168,76,0.35);
+            --green:      #2ecc71;
+            --red:        #e74c3c;
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Cormorant Garamond', serif;
+            background: var(--bg-deep);
+            color: var(--cream);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 50% 0%, rgba(13,26,18,0.95) 0%, transparent 70%),
+                repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.012) 2px, rgba(255,255,255,0.012) 4px),
+                var(--bg-felt);
+            z-index: -1;
+        }
+
+        /* NAV */
+        nav {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.2rem 2rem;
+            border-bottom: 1px solid rgba(201,168,76,0.15);
+        }
+        .nav-home { font-family: 'Playfair Display', serif; font-size: 1rem; color: var(--gold); text-decoration: none; letter-spacing: 0.1em; }
+        .nav-home:hover { color: var(--gold-light); }
+        .nav-links { display: flex; gap: 1.5rem; list-style: none; }
+        .nav-links a { color: rgba(245,234,216,0.45); text-decoration: none; font-size: 0.8rem; letter-spacing: 0.2em; text-transform: uppercase; transition: color 0.2s; }
+        .nav-links a:hover { color: var(--gold); }
+
+        /* LAYOUT */
+        .page-wrap {
+            width: 100%;
+            max-width: 900px;
+            padding: 2rem 1.5rem 4rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        h2.game-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            color: var(--gold-light);
+            letter-spacing: 0.08em;
+            text-align: center;
+        }
+
+        /* HISTORY BAR */
+        .history-bar {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            justify-content: center;
+            min-height: 28px;
+        }
+
+        .hist-chip {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            padding: 3px 10px;
+            border-radius: 30px;
+            border: 1px solid;
+            opacity: 0;
+            animation: popIn 0.25s ease forwards;
+        }
+        .hist-chip.low  { background: rgba(231,76,60,0.15);  border-color: rgba(231,76,60,0.5);  color: #ff8a80; }
+        .hist-chip.mid  { background: rgba(201,168,76,0.12); border-color: rgba(201,168,76,0.4); color: var(--gold); }
+        .hist-chip.high { background: rgba(46,204,113,0.12); border-color: rgba(46,204,113,0.4); color: #6effa8; }
+
+        @keyframes popIn { from { opacity:0; transform:scale(0.7); } to { opacity:1; transform:scale(1); } }
+
+        /* MAIN PANEL */
+        .main-panel {
+            display: grid;
+            grid-template-columns: 1fr 280px;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 640px) { .main-panel { grid-template-columns: 1fr; } }
+
+        /* CANVAS AREA */
+        .canvas-wrap {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        canvas { display: block; width: 100%; }
+
+        /* Big multiplier overlay */
+        .multiplier-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: clamp(3rem, 8vw, 5rem);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            text-align: center;
+            pointer-events: none;
+            transition: color 0.1s;
+        }
+
+        .multiplier-display.idle    { color: rgba(245,234,216,0.25); }
+        .multiplier-display.betting { color: rgba(245,234,216,0.5); }
+        .multiplier-display.flying  { color: var(--gold-light); text-shadow: 0 0 30px rgba(240,208,128,0.5); }
+        .multiplier-display.crashed { color: var(--red); text-shadow: 0 0 30px rgba(231,76,60,0.6); }
+        .multiplier-display.cashed  { color: var(--green); text-shadow: 0 0 30px rgba(46,204,113,0.5); }
+
+        .status-label {
+            position: absolute;
+            bottom: 14px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: rgba(245,234,216,0.4);
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .panel {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1.4rem 1.6rem;
+        }
+
+        .panel-label {
+            font-size: 0.72rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--gold-dim);
+            margin-bottom: 0.8rem;
+        }
+
+        .credits-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .credits-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.3rem;
+            color: var(--gold);
+        }
+
+        .refill-btn {
+            background: transparent;
+            border: 1px solid var(--gold-dim);
+            color: var(--gold-dim);
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 0.72rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border-radius: 2px;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: auto;
+        }
+        .refill-btn:hover { background: var(--gold-dim); color: var(--bg-deep); }
+
+        .input-group { display: flex; flex-direction: column; gap: 6px; }
+        .input-group label { font-size: 0.8rem; color: rgba(245,234,216,0.55); letter-spacing: 0.05em; }
+
+        input[type="number"] {
+            background: rgba(10,10,15,0.7);
+            color: var(--cream);
+            border: 1px solid rgba(201,168,76,0.25);
+            padding: 10px 12px;
+            border-radius: 4px;
+            width: 100%;
+            font-size: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            transition: border-color 0.2s;
+        }
+        input[type="number"]:focus { outline: none; border-color: var(--gold-dim); }
+
+        .action-btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 4px;
+            font-family: 'Playfair Display', serif;
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-bet {
+            background: var(--gold-dim);
+            color: var(--bg-deep);
+        }
+        .btn-bet:hover:not(:disabled) { background: var(--gold); }
+        .btn-bet:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .btn-cashout {
+            background: #1a5c36;
+            color: #6effa8;
+            border: 1px solid var(--green);
+        }
+        .btn-cashout:hover:not(:disabled) { background: var(--green); color: var(--bg-deep); }
+        .btn-cashout:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .result-msg {
+            text-align: center;
+            font-size: 0.95rem;
+            font-weight: 600;
+            min-height: 20px;
+            letter-spacing: 0.04em;
+        }
+        .result-msg.win  { color: #6effa8; }
+        .result-msg.lose { color: #ff6b6b; }
+        .result-msg.info { color: rgba(245,234,216,0.5); }
+
+        /* Countdown overlay */
+        .countdown-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(10,10,15,0.65);
+            gap: 0.5rem;
+            pointer-events: none;
+        }
+
+        .countdown-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 4rem;
+            font-weight: 700;
+            color: var(--gold-light);
+            text-shadow: 0 0 20px rgba(240,208,128,0.5);
+        }
+
+        .countdown-label {
+            font-size: 0.8rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: rgba(245,234,216,0.5);
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a class="nav-home" href="webpage.html">♛ Casino Folino</a>
+    <ul class="nav-links">
+        <li><a href="about.html">About</a></li>
+        <li><a href="resume.html">Résumé</a></li>
+        <li><a href="https://github.com/BearCheckmated" target="_blank">GitHub</a></li>
+        <li><a href="https://www.linkedin.com/in/logan-folino-253ab3381/" target="_blank">LinkedIn</a></li>
+    </ul>
+</nav>
+
+<div class="page-wrap">
+    <h2 class="game-title">🚀 Crash</h2>
+
+    <!-- History -->
+    <div class="history-bar" id="history-bar"></div>
+
+    <!-- Main panel -->
+    <div class="main-panel">
+
+        <!-- Canvas -->
+        <div class="canvas-wrap" id="canvas-wrap">
+            <canvas id="crashCanvas" height="360"></canvas>
+            <div class="multiplier-display idle" id="multi-display">1.00×</div>
+            <div class="status-label" id="status-label">Waiting for next round…</div>
+            <div class="countdown-overlay" id="countdown-overlay" style="display:none;">
+                <div class="countdown-num" id="countdown-num">3</div>
+                <div class="countdown-label">Next round starting</div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+
+            <!-- Credits -->
+            <div class="panel">
+                <div class="panel-label">Balance</div>
+                <div class="credits-row">
+                    <div class="credits-val">$<span id="credit-display">1000.00</span></div>
+                    <button class="refill-btn" onclick="refillCredits()">⟳ Refill</button>
+                </div>
+            </div>
+
+            <!-- Bet -->
+            <div class="panel">
+                <div class="panel-label">Place Bet</div>
+                <div class="input-group" style="margin-bottom:12px;">
+                    <label>Bet Amount</label>
+                    <input type="number" id="bet-input" value="10" min="1" step="1">
+                </div>
+                <div class="input-group" style="margin-bottom:14px;">
+                    <label>Auto Cash-Out (optional)</label>
+                    <input type="number" id="auto-cashout-input" placeholder="e.g. 2.00" min="1.01" step="0.01">
+                </div>
+                <button class="action-btn btn-bet" id="bet-btn" onclick="placeBet()">Place Bet</button>
+            </div>
+
+            <!-- Cash out -->
+            <div class="panel" style="display:flex; flex-direction:column; gap:10px;">
+                <button class="action-btn btn-cashout" id="cashout-btn" onclick="cashOut()" disabled>
+                    Cash Out
+                </button>
+                <div class="result-msg info" id="result-msg">Bet on the next round!</div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    // ── State ──────────────────────────────────────────────────────────────
+    let credits      = 1000;
+    let betAmount    = 0;
+    let hasBet       = false;
+    let hasCashedOut = false;
+    let currentMulti = 1.00;
+    let crashPoint   = 1.00;
+    let phase        = 'idle';   // idle | betting | flying | crashed
+    let animId       = null;
+    let startTime    = null;
+    let countdownVal = 0;
+    let countdownId  = null;
+    let history      = [];
+
+    // Canvas
+    const canvas   = document.getElementById('crashCanvas');
+    const ctx      = canvas.getContext('2d');
+    const canvasWrap = document.getElementById('canvas-wrap');
+
+    // UI refs
+    const creditDisplay   = document.getElementById('credit-display');
+    const betBtn          = document.getElementById('bet-btn');
+    const cashoutBtn      = document.getElementById('cashout-btn');
+    const multiDisplay    = document.getElementById('multi-display');
+    const statusLabel     = document.getElementById('status-label');
+    const resultMsg       = document.getElementById('result-msg');
+    const countdownOverlay= document.getElementById('countdown-overlay');
+    const countdownNum    = document.getElementById('countdown-num');
+    const historyBar      = document.getElementById('history-bar');
+
+    function updateCredits() { creditDisplay.innerText = credits.toFixed(2); }
+    function refillCredits() {
+        if (phase === 'flying') return;
+        credits = 1000;
+        updateCredits();
+        setMsg('Credits refilled to $1,000!', 'info');
+    }
+
+    function setMsg(text, cls) {
+        resultMsg.textContent = text;
+        resultMsg.className = 'result-msg ' + (cls || '');
+    }
+
+    // ── Crash point generation ─────────────────────────────────────────────
+    function generateCrashPoint() {
+        // 1% house edge; minimum 1.00
+        const r = Math.random();
+        if (r < 0.01) return 1.00;
+        return Math.max(1.00, parseFloat((0.99 / (1 - r)).toFixed(2)));
+    }
+
+    // ── Canvas sizing ──────────────────────────────────────────────────────
+    function resizeCanvas() {
+        canvas.width  = canvasWrap.clientWidth;
+        canvas.height = canvasWrap.clientHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // ── Draw ───────────────────────────────────────────────────────────────
+    const graphPoints = [];   // { t, multi } — recorded during flight
+
+    function drawGraph(crashed) {
+        const W = canvas.width, H = canvas.height;
+        ctx.clearRect(0, 0, W, H);
+
+        if (graphPoints.length < 2) return;
+
+        const padL = 50, padB = 30, padR = 20, padT = 20;
+        const gW = W - padL - padR;
+        const gH = H - padB - padT;
+
+        const maxT     = Math.max(graphPoints[graphPoints.length - 1].t, 1);
+        const maxMulti = Math.max(graphPoints[graphPoints.length - 1].multi, 2);
+
+        function toX(t)     { return padL + (t / maxT) * gW; }
+        function toY(multi) { return padT + gH - ((multi - 1) / (maxMulti - 1 || 1)) * gH; }
+
+        // Grid lines
+        ctx.strokeStyle = 'rgba(201,168,76,0.08)';
+        ctx.lineWidth = 1;
+        for (let m = 1; m <= Math.ceil(maxMulti); m++) {
+            ctx.beginPath();
+            ctx.moveTo(padL, toY(m));
+            ctx.lineTo(W - padR, toY(m));
+            ctx.stroke();
+            ctx.fillStyle = 'rgba(201,168,76,0.3)';
+            ctx.font = '10px JetBrains Mono, monospace';
+            ctx.textAlign = 'right';
+            ctx.fillText(m + 'x', padL - 5, toY(m) + 4);
+        }
+
+        // Curve fill
+        const grad = ctx.createLinearGradient(0, padT, 0, H - padB);
+        if (crashed) {
+            grad.addColorStop(0, 'rgba(231,76,60,0.35)');
+            grad.addColorStop(1, 'rgba(231,76,60,0.03)');
+        } else {
+            grad.addColorStop(0, 'rgba(201,168,76,0.35)');
+            grad.addColorStop(1, 'rgba(201,168,76,0.03)');
+        }
+
+        ctx.beginPath();
+        ctx.moveTo(toX(graphPoints[0].t), toY(graphPoints[0].multi));
+        for (let i = 1; i < graphPoints.length; i++) {
+            ctx.lineTo(toX(graphPoints[i].t), toY(graphPoints[i].multi));
+        }
+        ctx.lineTo(toX(graphPoints[graphPoints.length - 1].t), toY(1));
+        ctx.lineTo(toX(0), toY(1));
+        ctx.closePath();
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        // Curve line
+        ctx.beginPath();
+        ctx.moveTo(toX(graphPoints[0].t), toY(graphPoints[0].multi));
+        for (let i = 1; i < graphPoints.length; i++) {
+            ctx.lineTo(toX(graphPoints[i].t), toY(graphPoints[i].multi));
+        }
+        ctx.strokeStyle = crashed ? '#e74c3c' : '#f0d080';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+
+        // Rocket dot
+        if (!crashed) {
+            const last = graphPoints[graphPoints.length - 1];
+            ctx.beginPath();
+            ctx.arc(toX(last.t), toY(last.multi), 5, 0, Math.PI * 2);
+            ctx.fillStyle = '#f0d080';
+            ctx.shadowColor = '#f0d080';
+            ctx.shadowBlur  = 12;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+    }
+
+    // ── Round loop ─────────────────────────────────────────────────────────
+    function startCountdown(seconds, callback) {
+        countdownOverlay.style.display = 'flex';
+        countdownVal = seconds;
+        countdownNum.textContent = countdownVal;
+        countdownId = setInterval(() => {
+            countdownVal--;
+            if (countdownVal <= 0) {
+                clearInterval(countdownId);
+                countdownOverlay.style.display = 'none';
+                callback();
+            } else {
+                countdownNum.textContent = countdownVal;
+            }
+        }, 1000);
+    }
+
+    function beginRound() {
+        graphPoints.length = 0;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        crashPoint   = generateCrashPoint();
+        currentMulti = 1.00;
+        phase        = 'flying';
+        startTime    = null;
+        hasCashedOut = false;
+
+        multiDisplay.textContent = '1.00×';
+        multiDisplay.className   = 'multiplier-display flying';
+        statusLabel.textContent  = '🚀 Rocket is flying!';
+
+        betBtn.disabled = true;
+        document.getElementById('bet-input').disabled = true;
+
+        animId = requestAnimationFrame(tick);
+    }
+
+    function tick(timestamp) {
+        if (!startTime) startTime = timestamp;
+        const elapsed = (timestamp - startTime) / 1000;  // seconds
+
+        // Multiplier grows exponentially
+        currentMulti = parseFloat(Math.pow(Math.E, 0.4 * elapsed).toFixed(2));
+
+        graphPoints.push({ t: elapsed, multi: currentMulti });
+
+        // Auto cashout
+        const autoVal = parseFloat(document.getElementById('auto-cashout-input').value);
+        if (hasBet && !hasCashedOut && !isNaN(autoVal) && currentMulti >= autoVal) {
+            cashOut();
+        }
+
+        multiDisplay.textContent = currentMulti.toFixed(2) + '×';
+        drawGraph(false);
+
+        if (currentMulti >= crashPoint) {
+            doCrash();
+            return;
+        }
+
+        animId = requestAnimationFrame(tick);
+    }
+
+    function doCrash() {
+        phase = 'crashed';
+        multiDisplay.className   = 'multiplier-display crashed';
+        multiDisplay.textContent = crashPoint.toFixed(2) + '×';
+        statusLabel.textContent  = '💥 Crashed!';
+        cashoutBtn.disabled = true;
+        drawGraph(true);
+
+        addHistory(crashPoint);
+
+        if (hasBet && !hasCashedOut) {
+            setMsg(`Crashed at ${crashPoint.toFixed(2)}× — you lost $${betAmount.toFixed(2)}`, 'lose');
+        }
+
+        hasBet = false;
+        setTimeout(startBettingPhase, 3000);
+    }
+
+    function startBettingPhase() {
+        phase = 'betting';
+        multiDisplay.className   = 'multiplier-display betting';
+        multiDisplay.textContent = '—';
+        statusLabel.textContent  = 'Place your bets…';
+        betBtn.disabled = false;
+        document.getElementById('bet-input').disabled = false;
+        cashoutBtn.disabled = true;
+        graphPoints.length = 0;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        startCountdown(5, beginRound);
+    }
+
+    // ── Bet / Cashout ──────────────────────────────────────────────────────
+    function placeBet() {
+        if (phase !== 'betting') { setMsg('Wait for the next round!', 'info'); return; }
+        if (hasBet) { setMsg('Bet already placed!', 'info'); return; }
+
+        const amt = parseFloat(document.getElementById('bet-input').value);
+        if (isNaN(amt) || amt <= 0 || amt > credits) {
+            setMsg('Invalid bet amount!', 'lose'); return;
+        }
+
+        betAmount  = amt;
+        credits   -= amt;
+        updateCredits();
+        hasBet     = true;
+        hasCashedOut = false;
+        setMsg(`$${amt.toFixed(2)} bet placed — good luck!`, 'info');
+        cashoutBtn.disabled = false;
+    }
+
+    function cashOut() {
+        if (!hasBet || hasCashedOut || phase !== 'flying') return;
+        hasCashedOut = true;
+        const win = betAmount * currentMulti;
+        credits  += win;
+        updateCredits();
+        cashoutBtn.disabled = true;
+        multiDisplay.className = 'multiplier-display cashed';
+        setMsg(`💰 Cashed out at ${currentMulti.toFixed(2)}× — won $${win.toFixed(2)}!`, 'win');
+    }
+
+    // ── History ────────────────────────────────────────────────────────────
+    function addHistory(val) {
+        history.unshift(val);
+        if (history.length > 12) history.pop();
+
+        historyBar.innerHTML = '';
+        history.forEach(v => {
+            const chip = document.createElement('span');
+            chip.className = 'hist-chip ' + (v < 2 ? 'low' : v < 10 ? 'mid' : 'high');
+            chip.textContent = v.toFixed(2) + '×';
+            historyBar.appendChild(chip);
+        });
+    }
+
+    // ── Init ───────────────────────────────────────────────────────────────
+    updateCredits();
+    startBettingPhase();
+</script>
+</body>
+</html>

@@ -5,23 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Casino Folino</title>
 
-  <!-- =========================================================
-       FONTS
-       Using Playfair Display for headings (classic, opulent)
-       and Cormorant Garamond for body (editorial, refined).
-       Swap these out if you prefer a different style.
-  ========================================================= -->
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Cormorant+Garamond:wght@300;400;600&display=swap" rel="stylesheet"/>
 
   <style>
-    /* =========================================================
-       CSS VARIABLES — edit these to retheme the whole page
-    ========================================================= */
     :root {
       --bg-deep:    #0a0a0f;
-      --bg-felt:    #0d1a12;       /* dark casino-felt green */
+      --bg-felt:    #0d1a12;
       --gold:       #c9a84c;
       --gold-light: #f0d080;
       --gold-dim:   #6e5a28;
@@ -32,9 +23,6 @@
       --glow:       rgba(201,168,76,0.18);
     }
 
-    /* =========================================================
-       RESET & BASE
-    ========================================================= */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
@@ -45,9 +33,6 @@
       overflow-x: hidden;
     }
 
-    /* =========================================================
-       BACKGROUND — felt texture with radial gradient spotlight
-    ========================================================= */
     body::before {
       content: '';
       position: fixed;
@@ -66,9 +51,6 @@
       z-index: -1;
     }
 
-    /* =========================================================
-       DECORATIVE CORNER SUIT WATERMARKS
-    ========================================================= */
     body::after {
       content: '♠ ♥ ♦ ♣';
       position: fixed;
@@ -81,16 +63,46 @@
       z-index: 0;
     }
 
-    /* =========================================================
-       HEADER / HERO SECTION
-    ========================================================= */
+    /* ── NAV ── */
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.4rem 2.5rem;
+      border-bottom: 1px solid rgba(201,168,76,0.15);
+    }
+
+    .nav-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      color: var(--gold);
+      letter-spacing: 0.1em;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: rgba(245,234,216,0.5);
+      text-decoration: none;
+      font-size: 0.85rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--gold); }
+
+    /* ── HEADER ── */
     header {
       text-align: center;
       padding: 5rem 2rem 3.5rem;
       position: relative;
     }
 
-    /* Thin gold rule above the title */
     header::before {
       content: '';
       display: block;
@@ -109,7 +121,7 @@
     }
 
     @keyframes floatCrown {
-      0%, 100% { transform: translateY(0);   }
+      0%, 100% { transform: translateY(0); }
       50%       { transform: translateY(-6px); }
     }
 
@@ -123,7 +135,6 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      text-shadow: none; /* shadow applied via filter on wrapper */
       filter: drop-shadow(0 2px 18px rgba(201,168,76,0.35));
     }
 
@@ -136,7 +147,6 @@
       color: rgba(245,234,216,0.55);
     }
 
-    /* Thin gold rule below the title */
     header::after {
       content: '— ♦ —';
       display: block;
@@ -146,26 +156,37 @@
       color: var(--gold-dim);
     }
 
-    /* =========================================================
-       MAIN GAME GRID
-       Add more .game-card entries inside #games-grid to add
-       more games (see comment block below the grid).
-    ========================================================= */
+    /* ── SECTION LABELS ── */
+    .section-label {
+      text-align: center;
+      font-size: 0.75rem;
+      letter-spacing: 0.45em;
+      text-transform: uppercase;
+      color: var(--gold-dim);
+      margin-bottom: 1.5rem;
+    }
+
+    /* ── GAMES GRID ── */
     #games-grid {
       display: grid;
-      /* Auto-fit: each card is at least 280px wide, up to 1fr */
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 2rem;
       max-width: 1100px;
-      margin: 0 auto 6rem;
+      margin: 0 auto 1.5rem;
       padding: 0 2rem;
     }
 
-    /* =========================================================
-       GAME CARD
-       Each card links to one game file.
-    ========================================================= -->
-    */
+    /* ── PERSONAL GRID (2-col max) ── */
+    #personal-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+      max-width: 720px;
+      margin: 0 auto 4rem;
+      padding: 0 2rem;
+    }
+
+    /* ── GAME CARD ── */
     .game-card {
       position: relative;
       background: var(--card-bg);
@@ -183,25 +204,23 @@
       transition: transform 0.35s cubic-bezier(0.22,1,0.36,1),
                   box-shadow 0.35s ease,
                   border-color 0.35s ease;
-
-      /* staggered fade-in on load */
       opacity: 0;
       animation: cardReveal 0.7s ease forwards;
     }
 
-    /* Stagger delay for each card — add more nth-child rules as you add games */
     .game-card:nth-child(1) { animation-delay: 0.15s; }
     .game-card:nth-child(2) { animation-delay: 0.30s; }
     .game-card:nth-child(3) { animation-delay: 0.45s; }
-    /* .game-card:nth-child(4) { animation-delay: 0.60s; } */
-    /* .game-card:nth-child(5) { animation-delay: 0.75s; } */
+
+    /* Personal cards get their own delays */
+    #personal-grid .game-card:nth-child(1) { animation-delay: 0.55s; }
+    #personal-grid .game-card:nth-child(2) { animation-delay: 0.70s; }
 
     @keyframes cardReveal {
       from { opacity: 0; transform: translateY(24px); }
       to   { opacity: 1; transform: translateY(0);    }
     }
 
-    /* Subtle corner-glow effect */
     .game-card::before {
       content: '';
       position: absolute;
@@ -211,7 +230,6 @@
       transition: opacity 0.4s ease;
     }
 
-    /* Gold top-border sweep on hover */
     .game-card::after {
       content: '';
       position: absolute;
@@ -230,7 +248,6 @@
     .game-card:hover::before { opacity: 1; }
     .game-card:hover::after  { left: 100%; }
 
-    /* --- Card icon (emoji or text symbol) --- */
     .card-icon {
       font-size: 3.2rem;
       line-height: 1;
@@ -240,7 +257,6 @@
 
     .game-card:hover .card-icon { transform: scale(1.15) rotate(-4deg); }
 
-    /* --- Game title --- */
     .card-title {
       font-family: 'Playfair Display', serif;
       font-size: 1.55rem;
@@ -249,7 +265,6 @@
       letter-spacing: 0.04em;
     }
 
-    /* --- Short description beneath the title --- */
     .card-desc {
       font-size: 0.95rem;
       font-weight: 300;
@@ -258,7 +273,6 @@
       max-width: 26ch;
     }
 
-    /* --- "Play Now" chip button --- */
     .card-cta {
       margin-top: 0.5rem;
       display: inline-flex;
@@ -283,10 +297,40 @@
       color: var(--bg-deep);
     }
 
-    /* =========================================================
-       FOOTER
-    ========================================================= -->
-    */
+    /* ── SOCIAL ROW ── */
+    .social-row {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      padding: 0 2rem 5rem;
+      flex-wrap: wrap;
+    }
+
+    .social-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      border: 1px solid var(--gold-dim);
+      color: var(--gold);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      padding: 0.7rem 1.6rem;
+      border-radius: 2px;
+      transition: background 0.3s, border-color 0.3s, color 0.3s;
+      opacity: 0;
+      animation: cardReveal 0.7s ease 0.85s forwards;
+    }
+
+    .social-btn:hover {
+      background: var(--gold);
+      border-color: var(--gold);
+      color: var(--bg-deep);
+    }
+
+    /* ── FOOTER ── */
     footer {
       text-align: center;
       padding: 2rem;
@@ -297,44 +341,36 @@
       border-top: 1px solid rgba(201,168,76,0.1);
     }
 
-    /* =========================================================
-       RESPONSIVE TWEAKS
-    ========================================================= -->
-    */
     @media (max-width: 480px) {
-      #games-grid { grid-template-columns: 1fr; }
+      #games-grid, #personal-grid { grid-template-columns: 1fr; }
       h1 { font-size: 3rem; }
+      nav { padding: 1rem 1.2rem; }
+      .nav-links { gap: 1rem; }
     }
   </style>
 </head>
 <body>
 
-  <!-- =========================================================
-       HEADER
-       Edit the title, subtitle, and crown emoji as you like.
-  ========================================================= -->
+  <nav>
+    <span class="nav-logo">♛ Casino Folino</span>
+    <ul class="nav-links">
+      <li><a href="about.html">About</a></li>
+      <li><a href="resume.html">Résumé</a></li>
+      <li><a href="https://github.com/BearCheckmated" target="_blank">GitHub</a></li>
+      <li><a href="https://www.linkedin.com/in/logan-folino-253ab3381/" target="_blank">LinkedIn</a></li>
+    </ul>
+  </nav>
+
   <header>
     <div class="crown">♛</div>
     <h1>Casino Folino</h1>
     <p class="subtitle">Place your bets &amp; choose your game</p>
   </header>
 
-
-  <!-- =========================================================
-       GAMES GRID
-       ─────────────────────────────────────────────────────────
-       TO ADD A NEW GAME:
-         1. Copy one of the <a class="game-card"> blocks below.
-         2. Update the href to point to your new .html file.
-         3. Change the card-icon, card-title, and card-desc.
-         4. Add a new nth-child stagger rule in the CSS:
-              .game-card:nth-child(4) { animation-delay: 0.60s; }
-              .game-card:nth-child(5) { animation-delay: 0.75s; }
-            (increment the delay by ~0.15s per card)
-  ========================================================= -->
+  <!-- ── GAMES ── -->
+  <p class="section-label">The Tables</p>
   <main id="games-grid">
 
-    <!-- ── CARD 1: Baccarat / Blackjack / Ultimate Texas Hold'em ── -->
     <a class="game-card" href="Bacc_BJ_UTH.html">
       <span class="card-icon">🃏</span>
       <span class="card-title">Bacc · BJ · UTH</span>
@@ -345,7 +381,26 @@
       <span class="card-cta">Play Now ›</span>
     </a>
 
-    <!-- ── CARD 2: Mines ── -->
+    <a class="game-card" href="keno.html">
+      <span class="card-icon">🎰</span>
+      <span class="card-title">Keno</span>
+      <p class="card-desc">
+        Pick your numbers and watch the draw.
+        Big wins, big fun.
+      </p>
+      <span class="card-cta">Play Now ›</span>
+    </a>
+
+    <a class="game-card" href="crash.html">
+      <span class="card-icon">📈</span>
+      <span class="card-title">Crash</span>
+      <p class="card-desc">
+        Watch the multiplier crash or cash out before it does.
+        (I can never seem to win this one...)
+      </p>
+      <span class="card-cta">Play Now ›</span>
+    </a>
+
     <a class="game-card" href="mines.html">
       <span class="card-icon">💣</span>
       <span class="card-title">Mines</span>
@@ -356,7 +411,6 @@
       <span class="card-cta">Play Now ›</span>
     </a>
 
-    <!-- ── CARD 3: Plinko ── -->
     <a class="game-card" href="plinko.html">
       <span class="card-icon">🔮</span>
       <span class="card-title">Plinko</span>
@@ -367,26 +421,44 @@
       <span class="card-cta">Play Now ›</span>
     </a>
 
-    <!-- ── FUTURE GAMES GO HERE ──
-         Example template:
+  </main>
 
-    <a class="game-card" href="your-game.html">
-      <span class="card-icon">🎰</span>
-      <span class="card-title">Your Game</span>
+  <!-- ── PERSONAL ── -->
+  <p class="section-label" style="margin-top:2rem;">The Player</p>
+  <section id="personal-grid">
+
+    <a class="game-card" href="about.html">
+      <span class="card-icon">🎭</span>
+      <span class="card-title">About Me</span>
       <p class="card-desc">
-        Short description of the game goes here.
+        The person behind the casino. Interests, hobbies, and a few things you didn't ask for.
       </p>
-      <span class="card-cta">Play Now ›</span>
+      <span class="card-cta">Meet Me ›</span>
     </a>
-    -->
 
-  </main><!-- /#games-grid -->
+    <a class="game-card" href="resume.html">
+      <span class="card-icon">📄</span>
+      <span class="card-title">Résumé</span>
+      <p class="card-desc">
+        Education, skills, projects, and experience — laid out and ready to deal.
+      </p>
+      <span class="card-cta">View ›</span>
+    </a>
 
+  </section>
 
-  <!-- =========================================================
-       FOOTER
-       Edit the text below as you like.
-  ========================================================= -->
+  <!-- ── SOCIAL ── -->
+  <div class="social-row">
+    <a class="social-btn" href="https://www.linkedin.com/in/logan-folino-253ab3381/" target="_blank">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+      LinkedIn
+    </a>
+    <a class="social-btn" href="https://github.com/BearCheckmated" target="_blank">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+      GitHub
+    </a>
+  </div>
+
   <footer>
     <p>♠ Casino Folino &nbsp;·&nbsp; Play responsibly ♣</p>
   </footer>
